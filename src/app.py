@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import os
+from .config import settings
 
 # Создаем экземпляр FastAPI приложения
 app = FastAPI(
@@ -25,8 +26,10 @@ async def root():
     """Главная страница API"""
     return {
         "message": "Welcome to Task Manager API",
-        "environment": os.getenv("ENVIRONMENT", "development"),
-        "docs": "/docs"
+        "environment": settings.environment,
+        "docs": "/docs",
+        "database_connected": True if settings.database_url else False,
+        "redis_connected": True if settings.redis_url else False
     }
 
 @app.get("/health")
