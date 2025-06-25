@@ -23,5 +23,5 @@ COPY . .
 # Открываем порт для FastAPI
 EXPOSE 8000
 
-# Команда для запуска приложения (без uv run, так как пакеты установлены системно)
-CMD ["python", "-m", "uvicorn", "src.app:app", "--host", "0.0.0.0", "--port", "8000"]
+# Команда для запуска alembic и приложения
+CMD alembic upgrade head && python -m uvicorn src.app:app --host 0.0.0.0 --port 8000
