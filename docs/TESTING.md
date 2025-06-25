@@ -16,7 +16,9 @@ tests/
 ├── test_auth.py          # Тесты эндпоинтов аутентификации
 ├── test_users.py         # Тесты защищенных эндпоинтов пользователей
 ├── test_repositories.py  # Тесты репозиториев
-└── test_services.py      # Тесты сервисов
+├── test_services.py      # Тесты сервисов
+└── test_tasks_security.py # Тесты безопасности API задач
+└── test_task_service_security.py # Тесты безопасности сервисного слоя
 ```
 
 ## Запуск тестов
@@ -34,6 +36,18 @@ make test-auth          # Тесты аутентификации
 make test-users         # Тесты пользователей
 make test-repositories  # Тесты репозиториев
 make test-services      # Тесты сервисов
+```
+
+### Тесты безопасности
+```bash
+# Тесты безопасности API задач
+uv run pytest tests/test_tasks_security.py -v
+
+# Тесты безопасности сервисного слоя
+uv run pytest tests/test_task_service_security.py -v
+
+# Все тесты безопасности
+uv run pytest tests/test_*security.py -v
 ```
 
 ### С подробным выводом
@@ -83,6 +97,22 @@ uv run pytest tests/ --cov=src --cov-report=html --cov-report=term
 - `test_auth_service_authenticate_*` - Тесты аутентификации
 - `test_auth_service_login_*` - Тесты входа в систему
 
+### test_tasks_security.py - Тесты безопасности API задач
+- `test_cannot_access_other_user_task` - Защита от доступа к чужим задачам
+- `test_cannot_update_other_user_task` - Защита от обновления чужих задач
+- `test_cannot_delete_other_user_task` - Защита от удаления чужих задач
+- `test_tasks_isolation_in_list` - Изоляция задач в списках
+- `test_bulk_operations_isolation` - Безопасность массовых операций
+- `test_search_isolation` - Изоляция в поиске
+- `test_category_tasks_isolation` - Защита задач по категориям
+
+### test_task_service_security.py - Тесты безопасности сервисного слоя
+- `test_get_task_by_id_security` - Проверка доступа по ID
+- `test_update_task_security` - Безопасность обновления
+- `test_delete_task_security` - Безопасность удаления
+- `test_bulk_operations_security` - Массовые операции безопасности
+- `test_get_task_statistics_isolation` - Изоляция статистики
+
 ## Фикстуры
 
 ### conftest.py содержит следующие фикстуры:
@@ -91,6 +121,10 @@ uv run pytest tests/ --cov=src --cov-report=html --cov-report=term
 - `client` - Тестовый клиент FastAPI
 - `test_user_data` - Данные тестового пользователя
 - `another_user_data` - Данные второго пользователя
+- `test_user` - Объект тестового пользователя для unit-тестов
+- `another_user` - Объект второго пользователя для unit-тестов
+- `auth_headers` - Заголовки авторизации первого пользователя
+- `another_user_headers` - Заголовки авторизации второго пользователя
 
 ## Конфигурация
 

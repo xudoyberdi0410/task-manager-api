@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import os
 from .config import settings
-from .routers import token, users, auth, categories
+from .routers import token, users, auth, categories, tasks
 
 # Создаем экземпляр FastAPI приложения
 app = FastAPI(
@@ -27,6 +27,7 @@ app.include_router(token.router, tags=["authentication"])
 app.include_router(auth.router, prefix="/auth", tags=["authentication"])
 app.include_router(users.router, prefix="/api", tags=["users"])
 app.include_router(categories.router, prefix="/api", tags=["categories"])
+app.include_router(tasks.router, prefix="/api", tags=["tasks"])
 
 @app.get("/")
 async def root():
@@ -43,17 +44,6 @@ async def root():
 async def health_check():
     """Проверка состояния API"""
     return {"status": "healthy"}
-
-# Пример маршрута для задач
-@app.get("/tasks")
-async def get_tasks():
-    """Получить список всех задач"""
-    return {"tasks": []}
-
-@app.post("/tasks")
-async def create_task():
-    """Создать новую задачу"""
-    return {"message": "Task created successfully"}
 
 if __name__ == "__main__":
     import uvicorn

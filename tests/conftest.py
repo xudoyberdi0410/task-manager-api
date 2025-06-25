@@ -1,11 +1,15 @@
 """
 Конфигурация для тестов
 """
+import os
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 from fastapi.testclient import TestClient
+
+# Устанавливаем переменную для тестового режима
+os.environ["TESTING"] = "true"
 
 from src.app import app
 from src.models.base import Base
@@ -78,3 +82,89 @@ def another_user_data():
         "username": "anotheruser",
         "password": "anotherpassword123"
     }
+
+@pytest.fixture
+def auth_headers(client: TestClient, test_user_data: dict):
+    """Фикстура для получения заголовков авторизации"""
+    # Регистрируем пользователя
+    client.post("/auth/register", json=test_user_data)
+    
+    # Логинимся
+    login_data = {
+        "username": test_user_data["username"],
+        "password": test_user_data["password"]
+    }
+    response = client.post("/token", data=login_data)
+    token = response.json()["access_token"]
+    
+    return {"Authorization": f"Bearer {token}"}
+
+@pytest.fixture
+def test_category(client: TestClient, auth_headers: dict):
+    """Фикстура для создания тестовой категории"""
+    category_data = {"title": "Test Category"}
+    response = client.post("/api/categories/", json=category_data, headers=auth_headers)
+    return response.json()
+
+@pytest.fixture
+def test_task(client: TestClient, auth_headers: dict):
+    """Фикстура для создания тестовой задачи"""
+    task_data = {
+        "title": "Test Task",
+        "description": "Test task description",
+        "status": "todo",
+        "priority": "medium"
+    }
+    response = client.post("/api/tasks/", json=task_data, headers=auth_headers)
+    return response.json()
+
+@pytest.fixture
+def test_task_with_category(client: TestClient, auth_headers: dict, test_category: dict):
+    """Фикстура для создания тестовой задачи с категорией"""
+    task_data = {
+        "title": "Task with Category",
+        "description": "Task with category description",
+        "category_id": test_category["category_id"]
+    }
+    response = client.post("/api/tasks/", json=task_data, headers=auth_headers)
+    return response.json()
+
+@pytest.fixture
+def another_user_headers(client: TestClient, another_user_data: dict):
+    """Фикстура для получения заголовков авторизации второго пользователя"""
+    # Регистрируем второго пользователя
+    client.post("/auth/register", json=another_user_data)
+    
+    # Логинимся
+    login_data = {
+        "username": another_user_data["username"],
+        "password": another_user_data["password"]
+    }
+    response = client.post("/token", data=login_data)
+    token = response.json()["access_token"]
+    
+    return {"Authorization": f"Bearer {token}"}
+
+@pytest.fixture
+def test_user(db_session):
+    """Фикстура для создания тестового пользователя для unit-тестов"""
+    from src.repositories.user_repository import UserRepository
+    
+    user_repo = UserRepository(db_session)
+    return user_repo.create_user(
+        email="test@example.com",
+        username="testuser",
+        password="testpassword123"
+    )
+
+@pytest.fixture
+def another_user(db_session):
+    """Фикстура для создания второго тестового пользователя для unit-тестов"""
+    from src.repositories.user_repository import UserRepository
+    
+    user_repo = UserRepository(db_session)
+    return user_repo.create_user(
+        email="another@example.com",
+        username="anotheruser",
+        password="anotherpassword123"
+    )
