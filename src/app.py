@@ -86,7 +86,7 @@ app = FastAPI(
     openapi_tags=tags_metadata,
     contact={
         "name": "Task Manager API Support",
-        "email": "support@taskmanager.com",
+        "url": "https://github.com/xudoyberdi0410/task-manager-api",
     },
     license_info={
         "name": "MIT",
@@ -94,7 +94,7 @@ app = FastAPI(
     },
     servers=[
         {"url": "http://localhost:8000", "description": "Development server"},
-        {"url": "https://api.taskmanager.com", "description": "Production server"},
+        {"url": "https://task-manager-api-fntf.onrender.com", "description": "Production server"},
     ],
     # Настройки безопасности для Swagger UI
     swagger_ui_parameters={
@@ -108,7 +108,7 @@ app = FastAPI(
 # Настройка CORS для фронтенда
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # В продакшене укажите конкретные домены
+    allow_origins=settings.allowed_origins.split(",") if settings.allowed_origins != "*" else ["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

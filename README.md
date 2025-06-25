@@ -52,10 +52,16 @@ make init
 
 ### 3. Доступ к приложению
 
+**Локальная разработка:**
 - **API**: http://localhost:8000
 - **🔥 Swagger UI**: http://localhost:8000/docs - Интерактивная документация API
 - **ReDoc**: http://localhost:8000/redoc - Альтернативная документация
 - **pgAdmin**: http://localhost:5050 (admin@admin.com / admin)
+
+**Production:**
+- **🚀 Live API**: https://task-manager-api-fntf.onrender.com
+- **📚 Live Swagger**: https://task-manager-api-fntf.onrender.com/docs
+- **📖 Live ReDoc**: https://task-manager-api-fntf.onrender.com/redoc
 
 #### 📖 Быстрый тест API через Swagger
 
