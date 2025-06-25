@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import os
 from .config import settings
+from .routers import token, users, auth, categories
 
 # Создаем экземпляр FastAPI приложения
 app = FastAPI(
@@ -20,6 +21,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Подключаем роутеры
+app.include_router(token.router, tags=["authentication"])
+app.include_router(auth.router, prefix="/auth", tags=["authentication"])
+app.include_router(users.router, prefix="/api", tags=["users"])
+app.include_router(categories.router, prefix="/api", tags=["categories"])
 
 @app.get("/")
 async def root():

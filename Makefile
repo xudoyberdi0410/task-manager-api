@@ -106,3 +106,75 @@ init: ## Первоначальная настройка проекта
 	uv sync
 	docker compose build
 	docker compose up -d
+
+# Команды для локальной разработки (без Docker)
+.PHONY: install
+install: ## Установить зависимости
+	uv sync
+
+.PHONY: dev
+dev: ## Установить зависимости для разработки
+	uv sync --dev
+
+.PHONY: run-local
+run-local: ## Запустить API локально
+	uv run uvicorn src.app:app --reload --host 0.0.0.0 --port 8000
+
+.PHONY: test-local
+test-local: ## Запустить тесты локально
+	uv run pytest tests/ -v
+
+.PHONY: test-verbose
+test-verbose: ## Запустить тесты с подробным выводом
+	uv run pytest tests/ -v -s
+
+.PHONY: test-auth
+test-auth: ## Запустить тесты аутентификации
+	uv run pytest tests/test_auth.py -v
+
+.PHONY: test-users
+test-users: ## Запустить тесты пользователей
+	uv run pytest tests/test_users.py -v
+
+.PHONY: test-repositories
+test-repositories: ## Запустить тесты репозиториев
+	uv run pytest tests/test_repositories.py -v
+
+.PHONY: test-services
+test-services: ## Запустить тесты сервисов
+	uv run pytest tests/test_services.py -v
+
+.PHONY: test-coverage
+test-coverage: ## Запустить тесты с покрытием кода
+	uv run pytest tests/ --cov=src --cov-report=html --cov-report=term
+
+.PHONY: lint-local
+lint-local: ## Проверить код линтерами локально
+	uv run flake8 src/ tests/
+	uv run mypy src/
+
+.PHONY: format-local
+format-local: ## Отформатировать код локально
+	uv run black src/ tests/
+	uv run isort src/ tests/
+
+.PHONY: clean-local
+clean-local: ## Очистить временные файлы
+	rm -rf __pycache__/
+	rm -rf .pytest_cache/
+	rm -rf htmlcov/
+	rm -rf .coverage
+	rm -rf test.db
+	find . -name "*.pyc" -delete
+	find . -name "__pycache__" -delete
+
+.PHONY: db-upgrade-local
+db-upgrade-local: ## Применить миграции локально
+	uv run alembic upgrade head
+
+.PHONY: db-migrate-local
+db-migrate-local: ## Создать новую миграцию локально
+	@read -p "Enter migration message: " MESSAGE; \
+	uv run alembic revision --autogenerate -m "$$MESSAGE"
+
+# Команды для Docker контейнеров

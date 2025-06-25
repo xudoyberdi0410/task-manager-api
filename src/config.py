@@ -1,10 +1,12 @@
 import os
 from typing import List
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     """Application settings"""
+    
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
     
     # Environment
     environment: str = "development"
@@ -29,17 +31,13 @@ class Settings(BaseSettings):
     api_port: int = 8000
     
     # Security settings
-    secret_key: str = "your-secret-key-change-in-production"
+    secret_key: str = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
     
     # CORS settings
     allowed_origins: str = '["http://localhost:3000", "http://localhost:8080"]'
     
-    class Config:
-        env_file = ".env"
-        extra = "ignore"  # Ignore extra fields from .env
-
 
 # Create settings instance
 settings = Settings()
