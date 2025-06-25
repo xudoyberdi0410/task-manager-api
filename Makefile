@@ -177,4 +177,54 @@ db-migrate-local: ## Создать новую миграцию локально
 	@read -p "Enter migration message: " MESSAGE; \
 	uv run alembic revision --autogenerate -m "$$MESSAGE"
 
-# Команды для Docker контейнеров
+# Команды для CI/CD и инструментов разработки
+.PHONY: ci-install
+ci-install: ## Установить зависимости для CI (включая dev)
+	uv pip install --system -e ".[dev]"
+
+.PHONY: ci-test
+ci-test: ## Запустить тесты в CI окружении
+	python -m pytest tests/ -v --tb=short --cov=src --cov-report=html --cov-report=term-missing
+
+.PHONY: ci-lint
+ci-lint: ## Запустить линтеры в CI окружении
+	ruff check src/ tests/
+	black --check src/ tests/
+	mypy src/ --ignore-missing-imports
+
+.PHONY: ci-security
+ci-security: ## Запустить проверки безопасности
+	bandit -r src/ -f json -o bandit-report.json || true
+	safety check --json --output safety-report.json || true
+
+.PHONY: format
+format: ## Автоматически отформатировать код
+	ruff format src/ tests/
+	black src/ tests/
+
+.PHONY: lint
+lint: ## Запустить все проверки кода
+	ruff check src/ tests/
+	black --check src/ tests/
+	mypy src/ --ignore-missing-imports
+
+.PHONY: security
+security: ## Запустить проверки безопасности
+	bandit -r src/
+	safety check
+
+.PHONY: pre-commit
+pre-commit: format lint test-local ## Выполнить все проверки перед коммитом
+
+.PHONY: docker-build
+docker-build: ## Собрать Docker образ
+	docker build -t task-manager-api:latest .
+
+.PHONY: docker-run
+docker-run: ## Запустить Docker контейнер
+	docker run -p 8000:8000 --env-file .env task-manager-api:latest
+
+.PHONY: check-deps
+check-deps: ## Проверить зависимости на уязвимости
+	pip-audit --desc
+	safety check

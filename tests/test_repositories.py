@@ -1,5 +1,5 @@
-from src.repositories.user_repository import UserRepository
 from src.models.user import User
+from src.repositories.user_repository import UserRepository
 
 
 def test_create_user(db_session):
@@ -7,13 +7,13 @@ def test_create_user(db_session):
     email = "test@example.com"
     username = "testuser"
     password = "password"
-    
+
     new_user = repo.create_user(email, username, password)
-    
+
     assert new_user.email == email
     assert new_user.username == username
     assert new_user.hashed_password is not None
-    
+
     db_user = db_session.query(User).filter(User.email == email).first()
     assert db_user is not None
     assert db_user.username == username

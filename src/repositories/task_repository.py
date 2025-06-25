@@ -2,74 +2,76 @@
 Репозиторий для работы с задачами в базе данных.
 Содержит все операции CRUD для модели Task.
 """
-from typing import Optional, List, Tuple
-from sqlalchemy.orm import Session
-from sqlalchemy import func, and_
+
 from datetime import datetime
-from src.models.task import Task, StatusEnum, PriorityEnum
+
+from sqlalchemy import and_, func
+from sqlalchemy.orm import Session
+
+from src.models.task import PriorityEnum, StatusEnum, Task
 
 
 class TaskRepository:
     """Репозиторий для работы с задачами"""
-    
+
     def __init__(self, db: Session):
         self.db = db
-    
-    def get_by_id(self, task_id: int, user_id: int) -> Optional[Task]:
+
+    def get_by_id(self, task_id: int, user_id: int) -> Task | None:
         """Получить задачу по ID для конкретного пользователя"""
         return (
             self.db.query(Task)
             .filter(Task.task_id == task_id, Task.user_id == user_id)
             .first()
         )
-    
+
     def get_all_by_user(
-        self, 
-        user_id: int, 
-        skip: int = 0, 
+        self,
+        user_id: int,
+        skip: int = 0,
         limit: int = 100,
-        status: Optional[StatusEnum] = None,
-        priority: Optional[PriorityEnum] = None,
-        category_id: Optional[int] = None,
-        due_date_from: Optional[datetime] = None,
-        due_date_to: Optional[datetime] = None,
-        search: Optional[str] = None
-    ) -> Tuple[List[Task], int]:
+        status: StatusEnum | None = None,
+        priority: PriorityEnum | None = None,
+        category_id: int | None = None,
+        due_date_from: datetime | None = None,
+        due_date_to: datetime | None = None,
+        search: str | None = None,
+    ) -> tuple[list[Task], int]:
         """Получить список всех задач пользователя с фильтрацией и пагинацией"""
-        
+
         # Базовый фильтр по пользователю
         filters = [Task.user_id == user_id]
-        
+
         # Добавляем дополнительные фильтры
         if status:
             filters.append(Task.status == status)
-        
+
         if priority:
             filters.append(Task.priority == priority)
-        
+
         if category_id:
             filters.append(Task.category_id == category_id)
-        
+
         if due_date_from:
             filters.append(Task.due_date >= due_date_from)
-        
+
         if due_date_to:
             filters.append(Task.due_date <= due_date_to)
-        
+
         if search:
-            search_filter = Task.title.ilike(f"%{search}%") | Task.description.ilike(f"%{search}%")
+            search_filter = Task.title.ilike(f"%{search}%") | Task.description.ilike(
+                f"%{search}%"
+            )
             filters.append(search_filter)
-        
+
         # Создаем условие фильтрации
         filter_condition = and_(*filters)
-        
+
         # Получаем общее количество задач
         total = (
-            self.db.query(func.count(Task.task_id))
-            .filter(filter_condition)
-            .scalar()
+            self.db.query(func.count(Task.task_id)).filter(filter_condition).scalar()
         )
-        
+
         # Получаем задачи с пагинацией
         tasks = (
             self.db.query(Task)
@@ -79,10 +81,12 @@ class TaskRepository:
             .limit(limit)
             .all()
         )
-        
+
         return tasks, total
 
-    def get_by_status(self, user_id: int, status: StatusEnum, skip: int = 0, limit: int = 100) -> Tuple[List[Task], int]:
+    def get_by_status(
+        self, user_id: int, status: StatusEnum, skip: int = 0, limit: int = 100
+    ) -> tuple[list[Task], int]:
         """Получить задачи по статусу для конкретного пользователя"""
         # Получаем общее количество задач с указанным статусом
         total = (
@@ -90,7 +94,7 @@ class TaskRepository:
             .filter(Task.user_id == user_id, Task.status == status)
             .scalar()
         )
-        
+
         # Получаем задачи с пагинацией
         tasks = (
             self.db.query(Task)
@@ -100,10 +104,12 @@ class TaskRepository:
             .limit(limit)
             .all()
         )
-        
+
         return tasks, total
 
-    def get_by_category(self, user_id: int, category_id: int, skip: int = 0, limit: int = 100) -> Tuple[List[Task], int]:
+    def get_by_category(
+        self, user_id: int, category_id: int, skip: int = 0, limit: int = 100
+    ) -> tuple[list[Task], int]:
         """Получить задачи по категории для конкретного пользователя"""
         # Получаем общее количество задач в указанной категории
         total = (
@@ -111,7 +117,7 @@ class TaskRepository:
             .filter(Task.user_id == user_id, Task.category_id == category_id)
             .scalar()
         )
-        
+
         # Получаем задачи с пагинацией
         tasks = (
             self.db.query(Task)
@@ -121,13 +127,15 @@ class TaskRepository:
             .limit(limit)
             .all()
         )
-        
+
         return tasks, total
 
-    def get_overdue_tasks(self, user_id: int, skip: int = 0, limit: int = 100) -> Tuple[List[Task], int]:
+    def get_overdue_tasks(
+        self, user_id: int, skip: int = 0, limit: int = 100
+    ) -> tuple[list[Task], int]:
         """Получить просроченные задачи для конкретного пользователя"""
         now = datetime.utcnow()
-        
+
         # Получаем общее количество просроченных задач
         total = (
             self.db.query(func.count(Task.task_id))
@@ -135,11 +143,11 @@ class TaskRepository:
                 Task.user_id == user_id,
                 Task.due_date < now,
                 Task.status != StatusEnum.done,
-                Task.status != StatusEnum.archived
+                Task.status != StatusEnum.archived,
             )
             .scalar()
         )
-        
+
         # Получаем просроченные задачи с пагинацией
         tasks = (
             self.db.query(Task)
@@ -147,26 +155,27 @@ class TaskRepository:
                 Task.user_id == user_id,
                 Task.due_date < now,
                 Task.status != StatusEnum.done,
-                Task.status != StatusEnum.archived
+                Task.status != StatusEnum.archived,
             )
             .order_by(Task.due_date.asc())
             .offset(skip)
             .limit(limit)
             .all()
         )
-        
+
         return tasks, total
 
-    def search_tasks(self, query: str, user_id: int, skip: int = 0, limit: int = 100) -> Tuple[List[Task], int]:
+    def search_tasks(
+        self, query: str, user_id: int, skip: int = 0, limit: int = 100
+    ) -> tuple[list[Task], int]:
         """Поиск задач по названию и описанию для конкретного пользователя"""
         search_filter = (
-            (Task.title.ilike(f"%{query}%") | Task.description.ilike(f"%{query}%")) & 
-            (Task.user_id == user_id)
-        )
-        
+            Task.title.ilike(f"%{query}%") | Task.description.ilike(f"%{query}%")
+        ) & (Task.user_id == user_id)
+
         # Получаем общее количество найденных задач
         total = self.db.query(func.count(Task.task_id)).filter(search_filter).scalar()
-        
+
         # Получаем задачи с пагинацией
         tasks = (
             self.db.query(Task)
@@ -176,18 +185,18 @@ class TaskRepository:
             .limit(limit)
             .all()
         )
-        
+
         return tasks, total
-    
+
     def create_task(
-        self, 
-        title: str, 
+        self,
+        title: str,
         user_id: int,
-        description: Optional[str] = None,
+        description: str | None = None,
         status: StatusEnum = StatusEnum.todo,
         priority: PriorityEnum = PriorityEnum.medium,
-        due_date: Optional[datetime] = None,
-        category_id: Optional[int] = None
+        due_date: datetime | None = None,
+        category_id: int | None = None,
     ) -> Task:
         """Создать новую задачу"""
         new_task = Task(
@@ -197,43 +206,43 @@ class TaskRepository:
             priority=priority,
             due_date=due_date,
             user_id=user_id,
-            category_id=category_id
+            category_id=category_id,
         )
         self.db.add(new_task)
         self.db.commit()
         self.db.refresh(new_task)
         return new_task
-    
-    def update_task(self, task_id: int, user_id: int, **kwargs) -> Optional[Task]:
+
+    def update_task(self, task_id: int, user_id: int, **kwargs) -> Task | None:
         """Обновить данные задачи"""
         task = self.get_by_id(task_id, user_id)
         if not task:
             return None
-        
+
         for key, value in kwargs.items():
             if hasattr(task, key):
                 setattr(task, key, value)
-        
+
         self.db.commit()
         self.db.refresh(task)
         return task
 
     def update_task_partial(
-        self, 
-        task_id: int, 
+        self,
+        task_id: int,
         user_id: int,
-        title: Optional[str] = None,
-        description: Optional[str] = None,
-        status: Optional[StatusEnum] = None,
-        priority: Optional[PriorityEnum] = None,
-        due_date: Optional[datetime] = None,
-        category_id: Optional[int] = None
-    ) -> Optional[Task]:
+        title: str | None = None,
+        description: str | None = None,
+        status: StatusEnum | None = None,
+        priority: PriorityEnum | None = None,
+        due_date: datetime | None = None,
+        category_id: int | None = None,
+    ) -> Task | None:
         """Частичное обновление данных задачи"""
         task = self.get_by_id(task_id, user_id)
         if not task:
             return None
-        
+
         if title is not None:
             task.title = title
         if description is not None:
@@ -246,47 +255,51 @@ class TaskRepository:
             task.due_date = due_date
         if category_id is not None:
             task.category_id = category_id
-        
+
         self.db.commit()
         self.db.refresh(task)
         return task
 
-    def update_status(self, task_id: int, user_id: int, status: StatusEnum) -> Optional[Task]:
+    def update_status(
+        self, task_id: int, user_id: int, status: StatusEnum
+    ) -> Task | None:
         """Обновить статус задачи"""
         task = self.get_by_id(task_id, user_id)
         if not task:
             return None
-        
+
         task.status = status
         self.db.commit()
         self.db.refresh(task)
         return task
-    
+
     def delete_task(self, task_id: int, user_id: int) -> bool:
         """Удалить задачу"""
         task = self.get_by_id(task_id, user_id)
         if not task:
             return False
-        
+
         self.db.delete(task)
         self.db.commit()
         return True
-    
+
     def count_by_user(self, user_id: int) -> int:
         """Получить общее количество задач у пользователя"""
-        return (
+        result = (
             self.db.query(func.count(Task.task_id))
             .filter(Task.user_id == user_id)
             .scalar()
         )
+        return int(result or 0)
 
     def count_by_status(self, user_id: int, status: StatusEnum) -> int:
         """Получить количество задач определенного статуса у пользователя"""
-        return (
+        result = (
             self.db.query(func.count(Task.task_id))
             .filter(Task.user_id == user_id, Task.status == status)
             .scalar()
         )
+        return int(result or 0)
 
     def get_task_statistics(self, user_id: int) -> dict:
         """Получить статистику задач пользователя"""
@@ -295,7 +308,7 @@ class TaskRepository:
         in_progress_count = self.count_by_status(user_id, StatusEnum.in_progress)
         done_count = self.count_by_status(user_id, StatusEnum.done)
         archived_count = self.count_by_status(user_id, StatusEnum.archived)
-        
+
         # Подсчитываем просроченные задачи
         now = datetime.utcnow()
         overdue_count = (
@@ -304,16 +317,16 @@ class TaskRepository:
                 Task.user_id == user_id,
                 Task.due_date < now,
                 Task.status != StatusEnum.done,
-                Task.status != StatusEnum.archived
+                Task.status != StatusEnum.archived,
             )
             .scalar()
         )
-        
+
         return {
             "total": total,
             "todo": todo_count,
             "in_progress": in_progress_count,
             "done": done_count,
             "archived": archived_count,
-            "overdue": overdue_count
+            "overdue": overdue_count,
         }

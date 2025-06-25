@@ -1,7 +1,8 @@
 import pytest
 from fastapi import HTTPException
-from src.services.auth_service import AuthService, UserService
+
 from src.repositories.user_repository import UserRepository
+from src.services.auth_service import AuthService, UserService
 
 
 @pytest.fixture

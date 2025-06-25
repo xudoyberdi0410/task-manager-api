@@ -1,11 +1,13 @@
-from src.models.base import BaseModel
-
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import relationship
 
+from src.models.base import BaseModel
+
+
 class User(BaseModel):
     """Модель пользователя, представляющая таблицу пользователей в базе данных."""
-    __tablename__ = 'users'
+
+    __tablename__ = "users"
 
     user_id = Column(Integer, primary_key=True, autoincrement=True)
     email = Column(String(255), unique=True, nullable=False)

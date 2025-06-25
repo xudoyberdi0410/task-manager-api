@@ -1,9 +1,10 @@
-from src.models.base import BaseModel
+import enum
 
-from sqlalchemy import Column, Integer, String, ForeignKey, Enum, DateTime
+from sqlalchemy import Column, DateTime, Enum, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
-import enum
+from src.models.base import BaseModel
+
 
 class StatusEnum(enum.Enum):
     todo = "todo"
@@ -11,24 +12,31 @@ class StatusEnum(enum.Enum):
     done = "done"
     archived = "archived"
 
+
 class PriorityEnum(enum.Enum):
     low = "low"
     medium = "medium"
     high = "high"
     urgent = "urgent"
 
+
 class Task(BaseModel):
     """Модель задачи, представляющая таблицу задач в базе данных."""
-    __tablename__ = 'tasks'
+
+    __tablename__ = "tasks"
 
     task_id = Column(Integer, primary_key=True, index=True)
     title = Column(String, index=True, nullable=False)
     description = Column(String, nullable=True)
-    status = Column(Enum(StatusEnum), default=StatusEnum.todo, nullable=False)
-    priority = Column(Enum(PriorityEnum), default=PriorityEnum.medium, nullable=False)
+    status: "Column[StatusEnum]" = Column(
+        Enum(StatusEnum), default=StatusEnum.todo, nullable=False
+    )
+    priority: "Column[PriorityEnum]" = Column(
+        Enum(PriorityEnum), default=PriorityEnum.medium, nullable=False
+    )
     due_date = Column(DateTime, nullable=True)
-    user_id = Column(Integer, ForeignKey('users.user_id'), nullable=False)
-    category_id = Column(Integer, ForeignKey('categories.category_id'), nullable=True)
+    user_id = Column(Integer, ForeignKey("users.user_id"), nullable=False)
+    category_id = Column(Integer, ForeignKey("categories.category_id"), nullable=True)
 
     user = relationship("User", back_populates="tasks")
     category = relationship("Category", back_populates="tasks")

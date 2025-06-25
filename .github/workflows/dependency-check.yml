@@ -1,0 +1,103 @@
+name: Dependency Check
+
+on:
+  schedule:
+    # Запускается каждый понедельник в 9:00 UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch: # Позволяет запускать вручную
+
+jobs:
+  dependency-check:
+    name: Check Dependencies
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.13'
+    
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
+      with:
+        version: "latest"
+    
+    - name: Install dependencies
+      run: |
+        uv pip install --system -r pyproject.toml
+        uv pip install --system pip-audit safety
+    
+    - name: Run pip-audit
+      run: |
+        pip-audit --desc --output pip-audit-report.json --format json || true
+    
+    - name: Run safety check
+      run: |
+        safety check --json --output safety-report.json || true
+    
+    - name: Upload reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: dependency-reports
+        path: |
+          pip-audit-report.json
+          safety-report.json
+    
+    - name: Create issue if vulnerabilities found
+      if: failure()
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          
+          let vulnerabilities = [];
+          
+          // Проверяем отчет pip-audit
+          try {
+            const pipAuditReport = JSON.parse(fs.readFileSync('pip-audit-report.json', 'utf8'));
+            if (pipAuditReport.vulnerabilities && pipAuditReport.vulnerabilities.length > 0) {
+              vulnerabilities.push(...pipAuditReport.vulnerabilities);
+            }
+          } catch (e) {
+            console.log('No pip-audit report found or parsing failed');
+          }
+          
+          // Проверяем отчет safety
+          try {
+            const safetyReport = JSON.parse(fs.readFileSync('safety-report.json', 'utf8'));
+            if (safetyReport.vulnerabilities && safetyReport.vulnerabilities.length > 0) {
+              vulnerabilities.push(...safetyReport.vulnerabilities);
+            }
+          } catch (e) {
+            console.log('No safety report found or parsing failed');
+          }
+          
+          if (vulnerabilities.length > 0) {
+            const issueBody = `## 🚨 Security Vulnerabilities Detected
+            
+            This issue was automatically created because security vulnerabilities were found in project dependencies.
+            
+            ### Vulnerabilities Found: ${vulnerabilities.length}
+            
+            Please review the dependency reports in the latest workflow run and update the affected packages.
+            
+            **Action Required:**
+            1. Review the vulnerability reports
+            2. Update affected dependencies
+            3. Test the application
+            4. Create a pull request with the fixes
+            
+            ---
+            *This issue was created automatically by GitHub Actions on ${new Date().toISOString()}*`;
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚨 Security vulnerabilities detected - ${new Date().toISOString().split('T')[0]}`,
+              body: issueBody,
+              labels: ['security', 'dependencies', 'automated']
+            });
+          }
