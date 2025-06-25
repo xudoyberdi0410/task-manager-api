@@ -119,3 +119,5 @@ celerybeat.pid
 
 # Docker
 .dockerignore
+
+.ruff_cache/
