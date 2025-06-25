@@ -9,10 +9,8 @@ services:
     environment:
       - ENVIRONMENT=production
       - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD}@db:5432/taskmanager
-      - REDIS_URL=redis://redis:6379/0
     depends_on:
       - db
-      - redis
     restart: unless-stopped
     networks:
       - app-network
@@ -27,15 +25,6 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-    restart: unless-stopped
-    networks:
-      - app-network
-
-  # Redis для кэширования
-  redis:
-    image: redis:7-alpine
-    volumes:
-      - redis_data:/data
     restart: unless-stopped
     networks:
       - app-network
@@ -57,7 +46,6 @@ services:
 
 volumes:
   postgres_data:
-  redis_data:
 
 networks:
   app-network:

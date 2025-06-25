@@ -24,7 +24,6 @@ FastAPI приложение для управления задачами с и�
 - **FastAPI** - веб-фреймворк
 - **uv** - менеджер пакетов Python
 - **PostgreSQL** - база данных
-- **Redis** - кэширование
 - **Docker** - контейнеризация
 - **GitHub Actions** - CI/CD
 
@@ -180,7 +179,6 @@ task-manager-api/
 ```env
 ENVIRONMENT=development
 DATABASE_URL=postgresql://postgres:password@localhost:5432/taskmanager
-REDIS_URL=redis://localhost:6379/0
 SECRET_KEY=your-secret-key-here
 ```
 

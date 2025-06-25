@@ -38,7 +38,6 @@ dev-local: services ## Запустить сервисы в Docker и показ
 	@echo ""
 	@echo "Доступные сервисы:"
 	@echo "  - PostgreSQL: localhost:5432"
-	@echo "  - Redis: localhost:6379"
 	@echo "  - pgAdmin: http://localhost:5050"
 
 .PHONY: down

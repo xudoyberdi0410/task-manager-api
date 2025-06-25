@@ -192,7 +192,6 @@ async def root():
         "docs": "/docs",
         "redoc": "/redoc",
         "database_connected": True if settings.database_url else False,
-        "redis_connected": True if settings.redis_url else False,
     }
 
 

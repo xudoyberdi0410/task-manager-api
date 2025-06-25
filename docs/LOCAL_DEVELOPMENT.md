@@ -13,7 +13,7 @@ This guide explains how to run databases and services in Docker while running yo
 
 ### 1. Start Services Only
 
-Run only the database and Redis services in Docker:
+Run only the database services in Docker:
 
 ```bash
 make services
@@ -23,7 +23,6 @@ make services
 
 This will start:
 - PostgreSQL database on `localhost:5432`
-- Redis on `localhost:6379` 
 - pgAdmin on `http://localhost:5050`
 
 ### 2. Install Dependencies Locally
@@ -46,13 +45,12 @@ The application will connect to the Docker services using the configuration in `
 
 ```bash
 DATABASE_URL=postgresql://postgres:password@localhost:5432/taskmanager
-REDIS_URL=redis://localhost:6379/0
 ```
 
 ## Available Commands
 
 ```bash
-make services        # Start only services (db, redis, pgadmin)
+make services        # Start only services (db, pgadmin)
 make services-down   # Stop services
 make services-logs   # View services logs
 make dev-local       # Start services and show local run command
@@ -78,11 +76,10 @@ make services  # Only services in Docker
 uv run uvicorn src.app:app --reload  # App runs locally
 ```
 
-### Fully Local (if you have local PostgreSQL/Redis)
+### Fully Local (if you have local PostgreSQL)
 ```bash
 # Update .env with local service URLs
 DATABASE_URL=postgresql://postgres:password@localhost:5432/taskmanager
-REDIS_URL=redis://localhost:6379/0
 ```
 
 ## Environment Variables
@@ -90,7 +87,6 @@ REDIS_URL=redis://localhost:6379/0
 The application uses these key environment variables for connecting to services:
 
 - `DATABASE_URL`: PostgreSQL connection string
-- `REDIS_URL`: Redis connection string
 - `ENVIRONMENT`: development/production
 
 Check `.env` file for current configuration.
@@ -98,19 +94,17 @@ Check `.env` file for current configuration.
 ## Troubleshooting
 
 ### Port Conflicts
-If you have local PostgreSQL or Redis running, you might see port conflicts:
+If you have local PostgreSQL running, you might see port conflicts:
 
 ```bash
 # Change ports in docker-compose.services.yml
 ports:
   - "5433:5432"  # PostgreSQL on different port
-  - "6380:6379"  # Redis on different port
 ```
 
 Then update your `.env`:
 ```bash
 DATABASE_URL=postgresql://postgres:password@localhost:5433/taskmanager
-REDIS_URL=redis://localhost:6380/0
 ```
 
 ### Connection Issues

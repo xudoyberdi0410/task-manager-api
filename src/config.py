@@ -16,10 +16,6 @@ env_required_vars = [
     "DB_NAME",
     "DB_USER",
     "DB_PASSWORD",
-    "REDIS_URL",
-    "REDIS_HOST",
-    "REDIS_PORT",
-    "REDIS_DB",
     "API_HOST",
     "API_PORT",
     "SECRET_KEY",
@@ -65,19 +61,6 @@ class Settings(BaseSettings):
     db_password: str = Field(
         default="test_password" if TESTING else "", validation_alias="DB_PASSWORD"
     )
-
-    # Redis settings
-    redis_url: str = Field(
-        default="redis://localhost:6379/0" if TESTING else "",
-        validation_alias="REDIS_URL",
-    )
-    redis_host: str = Field(
-        default="localhost" if TESTING else "", validation_alias="REDIS_HOST"
-    )
-    redis_port: int = Field(
-        default=6379 if TESTING else 0, validation_alias="REDIS_PORT"
-    )
-    redis_db: int = Field(default=0 if TESTING else 0, validation_alias="REDIS_DB")
 
     # API settings
     api_host: str = Field(

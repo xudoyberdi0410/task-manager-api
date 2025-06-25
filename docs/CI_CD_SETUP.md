@@ -41,7 +41,6 @@ DEPLOY_HOST          # Хост для деплоя
 DEPLOY_USER          # Пользователь для деплоя  
 DEPLOY_KEY           # SSH ключ или токен
 DATABASE_URL         # URL продакшн базы данных
-REDIS_URL           # URL продакшн Redis
 SECRET_KEY          # Секретный ключ для JWT
 ```
 
