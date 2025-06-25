@@ -50,11 +50,18 @@ class CategoryService:
         self, category_data: CategoryCreate, user_id: int
     ) -> CategoryResponse | None:
         """Создать новую категорию"""
-        # Проверяем, что категория с таким названием не существует у пользователя
-        if self.repository.exists_by_title(category_data.title, user_id):
+        # Очищаем название от лишних пробелов
+        cleaned_title = category_data.title.strip()
+
+        # Проверяем, что после очистки название не пустое
+        if not cleaned_title:
             return None
 
-        category = self.repository.create_category(category_data.title, user_id)
+        # Проверяем, что категория с таким названием не существует у пользователя
+        if self.repository.exists_by_title(cleaned_title, user_id):
+            return None
+
+        category = self.repository.create_category(cleaned_title, user_id)
         return CategoryResponse.model_validate(category)
 
     def update_category(

@@ -344,29 +344,29 @@ class TestMultilingualCategories:
         self, category_service, multilingual_test_user
     ):
         """Тест обработки пустых и пробельных названий"""
-        invalid_titles = [
-            "",  # Пустая строка
+        from pydantic import ValidationError
+
+        # Только пустая строка должна вызывать ValidationError из-за min_length=1
+        with pytest.raises(ValidationError):
+            CategoryCreate(title="")
+
+        # Строки с пробелами проходят валидацию Pydantic (min_length=1),
+        # но должны быть отклонены на уровне бизнес-логики
+        whitespace_titles = [
             "   ",  # Только пробелы
             "\t\n",  # Табы и переносы
         ]
 
-        for title in invalid_titles:
+        for title in whitespace_titles:
+            # Эти строки проходят валидацию схемы, но должны быть отклонены сервисом
             category_data = CategoryCreate(title=title)
-
-            # В зависимости от валидации в схеме, это может выбросить исключение
-            # или создать категорию. Проверяем, что логика корректна
-            try:
-                category = category_service.create_category(
-                    category_data, multilingual_test_user.user_id
-                )
-                # Если категория создалась, убеждаемся что название не пустое после обработки
-                if category:
-                    assert (
-                        category.title.strip() != ""
-                    ), f"Создана категория с пустым названием: '{category.title}'"
-            except Exception:
-                # Исключение ожидаемо для пустых названий
-                pass
+            category = category_service.create_category(
+                category_data, multilingual_test_user.user_id
+            )
+            # Сервис должен вернуть None для пустых названий после очистки
+            assert (
+                category is None
+            ), f"Сервис не должен создавать категории с пустым названием: '{title}'"
 
 
 if __name__ == "__main__":

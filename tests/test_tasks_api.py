@@ -64,7 +64,7 @@ class TestTasksAPI:
         }
 
         response = client.post("/api/tasks/", json=task_data, headers=auth_headers)
-        assert response.status_code == 400
+        assert response.status_code == 422  # Pydantic validation error returns 422
 
     def test_get_tasks(self, client: TestClient, auth_headers: dict, test_task: dict):
         """Тест получения списка задач"""

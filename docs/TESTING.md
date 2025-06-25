@@ -13,11 +13,11 @@
 tests/
 ├── __init__.py
 ├── conftest.py           # Общие фикстуры и настройки
-├── test_auth.py          # Тесты эндпоинтов аутентификации
-├── test_users.py         # Тесты защищенных эндпоинтов пользователей
+├── test_users.py         # Тесты эндпоинтов аутентификации и пользователей
 ├── test_repositories.py  # Тесты репозиториев
 ├── test_services.py      # Тесты сервисов
-└── test_tasks_security.py # Тесты безопасности API задач
+├── test_tasks_api.py     # Тесты API задач
+├── test_tasks_security.py # Тесты безопасности API задач
 └── test_task_service_security.py # Тесты безопасности сервисного слоя
 ```
 
@@ -32,8 +32,8 @@ uv run pytest tests/ -v
 
 ### Конкретные группы тестов
 ```bash
-make test-auth          # Тесты аутентификации
-make test-users         # Тесты пользователей
+make test-auth          # Тесты аутентификации (test_users.py)
+make test-users         # Тесты пользователей  
 make test-repositories  # Тесты репозиториев
 make test-services      # Тесты сервисов
 ```
@@ -66,7 +66,7 @@ uv run pytest tests/ --cov=src --cov-report=html --cov-report=term
 
 ## Описание тестов
 
-### test_auth.py - Тесты аутентификации
+### test_users.py - Тесты аутентификации и пользователей
 - `test_register_user` - Регистрация нового пользователя
 - `test_register_duplicate_email` - Проверка дублирования email
 - `test_register_duplicate_username` - Проверка дублирования username
@@ -74,8 +74,6 @@ uv run pytest tests/ --cov=src --cov-report=html --cov-report=term
 - `test_login_wrong_email` - Вход с неправильным email
 - `test_login_wrong_password` - Вход с неправильным паролем
 - `test_login_without_registration` - Вход без регистрации
-
-### test_users.py - Тесты защищенных эндпоинтов
 - `test_get_current_user_success` - Получение информации о пользователе
 - `test_get_current_user_without_token` - Доступ без токена
 - `test_get_current_user_invalid_token` - Доступ с невалидным токеном
@@ -148,10 +146,10 @@ make test-local
 make test-coverage
 
 # Запуск конкретного файла
-uv run pytest tests/test_auth.py -v
+uv run pytest tests/test_users.py -v
 
 # Запуск конкретного теста
-uv run pytest tests/test_auth.py::test_register_user -v
+uv run pytest tests/test_users.py::test_register_user -v
 ```
 
 ### CI/CD
@@ -194,7 +192,7 @@ uv run pytest tests/ -x
 uv run pytest tests/ -v -s
 
 # Запуск конкретного теста с выводом
-uv run pytest tests/test_auth.py::test_register_user -v -s
+uv run pytest tests/test_users.py::test_register_user -v -s
 
 # С дополнительной информацией
 uv run pytest tests/ --tb=long

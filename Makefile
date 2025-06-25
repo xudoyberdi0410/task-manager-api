@@ -130,7 +130,7 @@ test-verbose: ## Запустить тесты с подробным вывод�
 
 .PHONY: test-auth
 test-auth: ## Запустить тесты аутентификации
-	uv run pytest tests/test_auth.py -v
+	uv run pytest tests/test_users.py -v -k "auth or register or login"
 
 .PHONY: test-users
 test-users: ## Запустить тесты пользователей
@@ -151,7 +151,7 @@ test-coverage: ## Запустить тесты с покрытием кода
 .PHONY: lint-local
 lint-local: ## Проверить код линтерами локально
 	uv run flake8 src/ tests/
-	uv run mypy src/
+	uv run mypy src/ --explicit-package-bases --ignore-missing-imports
 
 .PHONY: format-local
 format-local: ## Отформатировать код локально
@@ -190,7 +190,7 @@ ci-test: ## Запустить тесты в CI окружении
 ci-lint: ## Запустить линтеры в CI окружении
 	ruff check src/ tests/
 	black --check src/ tests/
-	mypy src/ --ignore-missing-imports
+	mypy src/ --explicit-package-bases --ignore-missing-imports
 
 .PHONY: ci-security
 ci-security: ## Запустить проверки безопасности
@@ -206,7 +206,7 @@ format: ## Автоматически отформатировать код
 lint: ## Запустить все проверки кода
 	ruff check src/ tests/
 	black --check src/ tests/
-	mypy src/ --ignore-missing-imports
+	mypy src/ --explicit-package-bases --ignore-missing-imports
 
 .PHONY: security
 security: ## Запустить проверки безопасности

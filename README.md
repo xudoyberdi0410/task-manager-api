@@ -1,8 +1,7 @@
 # Task Manager API
 
-[![CI/CD](https://github.com/[username]/task-manager-api/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/[username]/task-manager-api/actions/workflows/ci-cd.yml)
-[![Security Check](https://github.com/[username]/task-manager-api/actions/workflows/dependency-check.yml/badge.svg)](https://github.com/[username]/task-manager-api/actions/workflows/dependency-check.yml)
-[![Docker](https://ghcr.io/[username]/task-manager-api:latest)](https://ghcr.io/[username]/task-manager-api)
+[![CI/CD](https://github.com/xudoyberdi0410/task-manager-api/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/xudoyberdi0410/task-manager-api/actions/workflows/ci-cd.yml)
+[![Security Check](https://github.com/xudoyberdi0410/task-manager-api/actions/workflows/dependency-check.yml/badge.svg)](https://github.com/xudoyberdi0410/task-manager-api/actions/workflows/dependency-check.yml)
 
 FastAPI приложение для управления задачами с использованием uv для управления зависимостями.
 
@@ -10,10 +9,15 @@ FastAPI приложение для управления задачами с и�
 
 📚 **Полная документация находится в папке [docs/](docs/)**
 
+- [**Swagger Documentation**](docs/SWAGGER_DOCUMENTATION.md) - **🔥 Подробная документация по Swagger UI**
 - [Локальная разработка](docs/LOCAL_DEVELOPMENT.md) - Подробное руководство по разработке
 - [Система аутентификации](docs/AUTH_GUIDE.md) - Как работает аутентификация
-- [Тестирование](docs/TESTING.md) - Руководство по тестированию
-- [GitHub Actions CI/CD](docs/GITHUB_ACTIONS.md) - Настройка и использование CI/CD
+- [Тестирование](docs/TESTING.md) - Руководство по тестированию  
+- [API задач](docs/TASKS_API.md) - Документация API для работы с задачами
+- [Безопасность задач](docs/TASKS_SECURITY.md) - Система безопасности и изоляции данных
+- [Настройка CI/CD](docs/CI_CD_SETUP.md) - Пошаговая настройка CI/CD
+- [GitHub Actions CI/CD](docs/GITHUB_ACTIONS.md) - Использование GitHub Actions
+- [Инструменты разработки](docs/DEV_TOOLS_SETUP.md) - Установка dev tools
 
 ## Технологии
 
@@ -50,9 +54,17 @@ make init
 ### 3. Доступ к приложению
 
 - **API**: http://localhost:8000
-- **Документация**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
+- **🔥 Swagger UI**: http://localhost:8000/docs - Интерактивная документация API
+- **ReDoc**: http://localhost:8000/redoc - Альтернативная документация
 - **pgAdmin**: http://localhost:5050 (admin@admin.com / admin)
+
+#### 📖 Быстрый тест API через Swagger
+
+1. Откройте http://localhost:8000/docs
+2. Зарегистрируйтесь: `POST /auth/register`
+3. Получите токен: `POST /token`
+4. Нажмите "Authorize" и введите: `Bearer <ваш_токен>`
+5. Теперь можете тестировать все защищенные эндпоинты!
 
 ## CI/CD
 
@@ -79,11 +91,11 @@ make init
 ./scripts/ci-check.sh
 
 # Или по отдельности
-make format     # Форматирование кода
-make lint       # Линтинг
-make security   # Проверка безопасности
-make test-local # Тесты
-make pre-commit # Все проверки перед коммитом
+make format-local   # Форматирование кода
+make lint-local     # Линтинг
+make security       # Проверка безопасности
+make test-local     # Тесты
+make pre-commit     # Все проверки перед коммитом
 ```
 
 ## Разработка
@@ -195,8 +207,10 @@ make prod-up
 - `GET /` - Главная страница
 - `GET /health` - Проверка состояния
 - `GET /docs` - Swagger документация
-- `GET /tasks` - Список задач
-- `POST /tasks` - Создание задачи
+- `GET /api/tasks` - Список задач
+- `POST /api/tasks` - Создание задачи
+- `POST /auth/register` - Регистрация пользователя
+- `POST /token` - Получение JWT токена
 
 ## Разработка
 
@@ -227,11 +241,11 @@ uv run pytest --cov=src
 
 ```bash
 # Форматирование кода
-uv run black src/
-uv run isort src/
+uv run black src/ tests/
+uv run isort src/ tests/
 
 # Проверка линтером
-uv run flake8 src/
+uv run ruff check src/ tests/
 ```
 
 ## Troubleshooting

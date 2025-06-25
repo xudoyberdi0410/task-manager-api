@@ -65,13 +65,13 @@ username=user@example.com&password=password123
 
 ### 3. Получение информации о текущем пользователе
 ```http
-GET /api/users/me/
+GET /api/users/me
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
 ### 4. Получение задач пользователя
 ```http
-GET /api/users/me/tasks/
+GET /api/users/me/tasks
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
