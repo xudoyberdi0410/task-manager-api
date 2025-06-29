@@ -3,6 +3,7 @@ name: Dependency Security Check
 on:
   # Можно запустить вручную
   workflow_dispatch:
+
   
   # Запускается при изменении файлов зависимостей
   push:
