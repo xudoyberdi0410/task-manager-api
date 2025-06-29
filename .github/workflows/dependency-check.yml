@@ -3,6 +3,10 @@ name: Dependency Security Check
 on:
   # Можно запустить вручную
   workflow_dispatch:
+  
+  # Запускается ежемесячно 1-го числа в 9:00 UTC
+  schedule:
+    - cron: '0 9 1 * *'
 
   
   # Запускается при изменении файлов зависимостей
@@ -52,30 +56,9 @@ jobs:
           uv sync --frozen
           
           # Устанавливаем инструменты безопасности
-          uv pip install --system safety pip-audit bandit
+          uv pip install --system pip-audit bandit
       
-      - name: 🛡️ Run Safety check
-        id: safety
-        run: |
-          echo "## 🛡️ Safety Vulnerability Report" >> $GITHUB_STEP_SUMMARY
-          
-          # Проверяем зависимости на известные уязвимости
-          if safety check --json --output safety-report.json; then
-            echo "✅ No known vulnerabilities found by Safety" >> $GITHUB_STEP_SUMMARY
-            echo "safety_status=success" >> $GITHUB_OUTPUT
-          else
-            echo "❌ Safety found vulnerabilities" >> $GITHUB_STEP_SUMMARY
-            echo "safety_status=failure" >> $GITHUB_OUTPUT
-            
-            # Добавляем отчет в summary
-            echo "### Safety Report Details:" >> $GITHUB_STEP_SUMMARY
-            echo '```json' >> $GITHUB_STEP_SUMMARY
-            cat safety-report.json >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-          fi
-        continue-on-error: true
-      
-      - name: 🔍 Run pip-audit
+      - name:  Run pip-audit
         id: pip_audit
         run: |
           echo "## 🔍 pip-audit Vulnerability Report" >> $GITHUB_STEP_SUMMARY
@@ -122,7 +105,6 @@ jobs:
           echo "## 📊 Security Check Summary" >> $GITHUB_STEP_SUMMARY
           echo "| Tool | Status | Description |" >> $GITHUB_STEP_SUMMARY
           echo "|------|--------|-------------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Safety | ${{ steps.safety.outputs.safety_status == 'success' && '✅ Pass' || '❌ Fail' }} | Checks for known vulnerabilities in dependencies |" >> $GITHUB_STEP_SUMMARY
           echo "| pip-audit | ${{ steps.pip_audit.outputs.pip_audit_status == 'success' && '✅ Pass' || '❌ Fail' }} | OSV database vulnerability scanner |" >> $GITHUB_STEP_SUMMARY
           echo "| Bandit | ${{ steps.bandit.outputs.bandit_status == 'success' && '✅ Pass' || '❌ Fail' }} | Static security analysis for Python code |" >> $GITHUB_STEP_SUMMARY
           
@@ -140,14 +122,12 @@ jobs:
         with:
           name: security-reports
           path: |
-            safety-report.json
             pip-audit-report.json
             bandit-report.json
           retention-days: 30
       
       - name: 🚨 Create issue on vulnerability found
         if: |
-          steps.safety.outputs.safety_status == 'failure' ||
           steps.pip_audit.outputs.pip_audit_status == 'failure' ||
           steps.bandit.outputs.bandit_status == 'failure'
         uses: actions/github-script@v7
@@ -159,7 +139,6 @@ jobs:
             Automated security scan detected potential vulnerabilities in the project dependencies or code.
             
             ### 📋 Scan Results:
-            - **Safety**: ${{ steps.safety.outputs.safety_status }}
             - **pip-audit**: ${{ steps.pip_audit.outputs.pip_audit_status }}
             - **Bandit**: ${{ steps.bandit.outputs.bandit_status }}
             
@@ -177,9 +156,9 @@ jobs:
             5. Close this issue once all issues are resolved
             
             ### 📚 Resources:
-            - [Safety Documentation](https://pyup.io/safety/)
             - [pip-audit Documentation](https://pypi.org/project/pip-audit/)
             - [Bandit Documentation](https://bandit.readthedocs.io/)
+            - [OSV Database](https://osv.dev/)
             
             ---
             *This issue was automatically created by the dependency check workflow.*
@@ -218,7 +197,6 @@ jobs:
       
       - name: ✅ Report success
         if: |
-          steps.safety.outputs.safety_status == 'success' &&
           steps.pip_audit.outputs.pip_audit_status == 'success' &&
           steps.bandit.outputs.bandit_status == 'success'
         run: |
@@ -227,7 +205,6 @@ jobs:
       
       - name: ❌ Fail on critical vulnerabilities
         if: |
-          steps.safety.outputs.safety_status == 'failure' ||
           steps.pip_audit.outputs.pip_audit_status == 'failure'
         run: |
           echo "❌ Critical security vulnerabilities detected!"

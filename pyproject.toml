@@ -153,5 +153,6 @@ skips = ["B104"]  # Skip hardcoded bind all interfaces warning for development
 
 [dependency-groups]
 dev = [
+    "bandit>=1.8.5",
     "types-passlib>=1.7.7.20250602",
 ]
