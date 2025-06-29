@@ -2,6 +2,10 @@
 
 [![CI/CD](https://github.com/xudoyberdi0410/task-manager-api/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/xudoyberdi0410/task-manager-api/actions/workflows/ci-cd.yml)
 [![Security Check](https://github.com/xudoyberdi0410/task-manager-api/actions/workflows/dependency-check.yml/badge.svg)](https://github.com/xudoyberdi0410/task-manager-api/actions/workflows/dependency-check.yml)
+[![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-green.svg)](https://fastapi.tiangolo.com)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 FastAPI приложение для управления задачами с использованием uv для управления зависимостями.
 

@@ -209,7 +209,14 @@ async def health_check():
     Simple health check to verify the API is running properly.
     Used by monitoring systems and load balancers.
     """
-    return {"status": "healthy", "timestamp": "2025-06-25T00:00:00Z"}
+    from datetime import datetime, UTC
+    
+    return {
+        "status": "healthy", 
+        "timestamp": datetime.now(UTC).isoformat(),
+        "version": "1.0.0",
+        "environment": settings.environment
+    }
 
 
 if __name__ == "__main__":

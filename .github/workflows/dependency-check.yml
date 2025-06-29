@@ -1,0 +1,234 @@
+name: Dependency Security Check
+
+on:
+  # Можно запустить вручную
+  workflow_dispatch:
+  
+  # Запускается при изменении файлов зависимостей
+  push:
+    paths:
+      - 'pyproject.toml'
+      - 'uv.lock'
+      - 'requirements*.txt'
+  
+  pull_request:
+    paths:
+      - 'pyproject.toml'
+      - 'uv.lock'
+      - 'requirements*.txt'
+
+jobs:
+  dependency-check:
+    name: 🔍 Security Scan Dependencies
+    runs-on: ubuntu-latest
+    
+    permissions:
+      # Необходимо для создания security advisories
+      security-events: write
+      # Необходимо для создания issues
+      issues: write
+      # Необходимо для чтения репозитория
+      contents: read
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+      
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      
+      - name: 📦 Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+      
+      - name: 🔧 Install dependencies
+        run: |
+          # Устанавливаем основные зависимости
+          uv sync --frozen
+          
+          # Устанавливаем инструменты безопасности
+          uv pip install --system safety pip-audit bandit
+      
+      - name: 🛡️ Run Safety check
+        id: safety
+        run: |
+          echo "## 🛡️ Safety Vulnerability Report" >> $GITHUB_STEP_SUMMARY
+          
+          # Проверяем зависимости на известные уязвимости
+          if safety check --json --output safety-report.json; then
+            echo "✅ No known vulnerabilities found by Safety" >> $GITHUB_STEP_SUMMARY
+            echo "safety_status=success" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Safety found vulnerabilities" >> $GITHUB_STEP_SUMMARY
+            echo "safety_status=failure" >> $GITHUB_OUTPUT
+            
+            # Добавляем отчет в summary
+            echo "### Safety Report Details:" >> $GITHUB_STEP_SUMMARY
+            echo '```json' >> $GITHUB_STEP_SUMMARY
+            cat safety-report.json >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
+        continue-on-error: true
+      
+      - name: 🔍 Run pip-audit
+        id: pip_audit
+        run: |
+          echo "## 🔍 pip-audit Vulnerability Report" >> $GITHUB_STEP_SUMMARY
+          
+          # Проверяем зависимости с помощью pip-audit
+          if pip-audit --format=json --output=pip-audit-report.json; then
+            echo "✅ No vulnerabilities found by pip-audit" >> $GITHUB_STEP_SUMMARY
+            echo "pip_audit_status=success" >> $GITHUB_OUTPUT
+          else
+            echo "❌ pip-audit found vulnerabilities" >> $GITHUB_STEP_SUMMARY
+            echo "pip_audit_status=failure" >> $GITHUB_OUTPUT
+            
+            # Добавляем отчет в summary
+            echo "### pip-audit Report Details:" >> $GITHUB_STEP_SUMMARY
+            echo '```json' >> $GITHUB_STEP_SUMMARY
+            cat pip-audit-report.json >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
+        continue-on-error: true
+      
+      - name: 🔒 Run Bandit security check
+        id: bandit
+        run: |
+          echo "## 🔒 Bandit Security Analysis" >> $GITHUB_STEP_SUMMARY
+          
+          # Проверяем код на потенциальные проблемы безопасности
+          if bandit -r src/ -f json -o bandit-report.json -ll; then
+            echo "✅ No security issues found by Bandit" >> $GITHUB_STEP_SUMMARY
+            echo "bandit_status=success" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Bandit found security issues" >> $GITHUB_STEP_SUMMARY
+            echo "bandit_status=failure" >> $GITHUB_OUTPUT
+            
+            # Добавляем краткий отчет в summary
+            echo "### Bandit Report Summary:" >> $GITHUB_STEP_SUMMARY
+            echo '```json' >> $GITHUB_STEP_SUMMARY
+            jq '.results[] | {filename: .filename, test_name: .test_name, issue_severity: .issue_severity, issue_text: .issue_text}' bandit-report.json >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
+        continue-on-error: true
+      
+      - name: 📊 Generate security summary
+        run: |
+          echo "## 📊 Security Check Summary" >> $GITHUB_STEP_SUMMARY
+          echo "| Tool | Status | Description |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|--------|-------------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Safety | ${{ steps.safety.outputs.safety_status == 'success' && '✅ Pass' || '❌ Fail' }} | Checks for known vulnerabilities in dependencies |" >> $GITHUB_STEP_SUMMARY
+          echo "| pip-audit | ${{ steps.pip_audit.outputs.pip_audit_status == 'success' && '✅ Pass' || '❌ Fail' }} | OSV database vulnerability scanner |" >> $GITHUB_STEP_SUMMARY
+          echo "| Bandit | ${{ steps.bandit.outputs.bandit_status == 'success' && '✅ Pass' || '❌ Fail' }} | Static security analysis for Python code |" >> $GITHUB_STEP_SUMMARY
+          
+          # Добавляем рекомендации
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 💡 Recommendations:" >> $GITHUB_STEP_SUMMARY
+          echo "- Review and update vulnerable dependencies" >> $GITHUB_STEP_SUMMARY
+          echo "- Check for alternative packages if fixes aren't available" >> $GITHUB_STEP_SUMMARY
+          echo "- Consider pinning versions for critical dependencies" >> $GITHUB_STEP_SUMMARY
+          echo "- Run \`uv sync --upgrade\` to update to latest versions" >> $GITHUB_STEP_SUMMARY
+      
+      - name: 📤 Upload security reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-reports
+          path: |
+            safety-report.json
+            pip-audit-report.json
+            bandit-report.json
+          retention-days: 30
+      
+      - name: 🚨 Create issue on vulnerability found
+        if: |
+          steps.safety.outputs.safety_status == 'failure' ||
+          steps.pip_audit.outputs.pip_audit_status == 'failure' ||
+          steps.bandit.outputs.bandit_status == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = `🚨 Security vulnerabilities detected - ${new Date().toISOString().split('T')[0]}`;
+            const body = `## 🚨 Security Alert
+            
+            Automated security scan detected potential vulnerabilities in the project dependencies or code.
+            
+            ### 📋 Scan Results:
+            - **Safety**: ${{ steps.safety.outputs.safety_status }}
+            - **pip-audit**: ${{ steps.pip_audit.outputs.pip_audit_status }}
+            - **Bandit**: ${{ steps.bandit.outputs.bandit_status }}
+            
+            ### 🔗 Workflow Run:
+            [View detailed results](${context.payload.repository.html_url}/actions/runs/${context.runId})
+            
+            ### 📥 Security Reports:
+            Download the detailed reports from the workflow artifacts.
+            
+            ### 🛠️ Next Steps:
+            1. Review the detailed security reports
+            2. Update vulnerable dependencies: \`uv sync --upgrade\`
+            3. Apply security patches where available
+            4. Consider alternative packages if no fixes are available
+            5. Close this issue once all issues are resolved
+            
+            ### 📚 Resources:
+            - [Safety Documentation](https://pyup.io/safety/)
+            - [pip-audit Documentation](https://pypi.org/project/pip-audit/)
+            - [Bandit Documentation](https://bandit.readthedocs.io/)
+            
+            ---
+            *This issue was automatically created by the dependency check workflow.*
+            `;
+            
+            // Проверяем, есть ли уже открытый issue с таким же заголовком
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: ['security', 'dependencies']
+            });
+            
+            const existingIssue = issues.data.find(issue => 
+              issue.title.includes('Security vulnerabilities detected')
+            );
+            
+            if (existingIssue) {
+              // Обновляем существующий issue
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: `## 🔄 Updated Security Scan Results\n\n${body}`
+              });
+            } else {
+              // Создаем новый issue
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['security', 'dependencies', 'automated']
+              });
+            }
+      
+      - name: ✅ Report success
+        if: |
+          steps.safety.outputs.safety_status == 'success' &&
+          steps.pip_audit.outputs.pip_audit_status == 'success' &&
+          steps.bandit.outputs.bandit_status == 'success'
+        run: |
+          echo "🎉 All security checks passed successfully!" >> $GITHUB_STEP_SUMMARY
+          echo "No known vulnerabilities found in dependencies or code." >> $GITHUB_STEP_SUMMARY
+      
+      - name: ❌ Fail on critical vulnerabilities
+        if: |
+          steps.safety.outputs.safety_status == 'failure' ||
+          steps.pip_audit.outputs.pip_audit_status == 'failure'
+        run: |
+          echo "❌ Critical security vulnerabilities detected!"
+          echo "Please review the security reports and update vulnerable dependencies."
+          exit 1
